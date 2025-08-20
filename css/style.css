@@ -172,12 +172,12 @@ img {
 .nav-list {
   display: flex;
   gap: 40px;
-  padding: 24px 0;
 }
 
 .nav-link {
   font-weight: 500;
   color: var(--navy-blue);
+  padding: 24px 0;
 }
 
 /* Hover/Focus ефекти */
