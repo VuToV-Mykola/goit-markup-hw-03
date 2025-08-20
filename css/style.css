@@ -1,6 +1,6 @@
 :root {
   --primary-font: "Roboto", sans-serif;
-  --secondary-font: "Raleway", sans-serif;
+  --second-family: "Raleway", sans-serif;
   --iris: #4d5ae5;
   --ocean: #404bbf;
   --navy-blue: #2e2f42;
@@ -131,7 +131,6 @@ img {
 
 /* header */
 .header {
-  padding: 24px 0;
   border-bottom: 1px solid var(--cornflower);
 }
 
@@ -290,7 +289,7 @@ img {
 .team-item {
   background-color: var(--white);
   flex-basis: calc((100% - 72px) / 4);
-  padding-bottom: 32px;
+
   border-radius: 0 0 4px 4px;
   box-shadow:
     0 2px 1px 0 rgb(46 47 66 / 8%),
