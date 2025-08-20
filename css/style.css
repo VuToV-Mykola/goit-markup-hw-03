@@ -26,9 +26,23 @@
 /* background-color: rgb(0 255 0 / 10%); прозорий, щоб було видно накладки */
 
 /* !!! Ховаємо заголовок !!! */
+
+/* .visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(100%);
+} */
 .visually-hidden {
   position: absolute;
   overflow: hidden;
+  /* stylelint-disable-next-line property-no-deprecated */
+  clip: rect(0 0 0 0);
   width: 1px;
   height: 1px;
   margin: -1px;
@@ -141,6 +155,8 @@ img {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--iris);
+  margin-right: 76px;
+  padding: 24px 0;
 }
 
 .accent {
@@ -151,7 +167,6 @@ img {
 .nav {
   display: flex;
   align-items: center;
-  gap: 76px;
 }
 
 .nav-list {
@@ -215,14 +230,15 @@ img {
 
   /* !!! Включаємо блочну модель !!! */
   display: block;
-
-  /*  !!! центруємо елемент по горизонталі !!! */
+  min-width: 169px;
+  height: 56px;
   margin: 0 auto;
 
   padding: 16px 32px;
+  border: none;
   border-radius: 4px;
-  cursor: pointer;
   box-shadow: 0 4px 4px 0 rgb(0 0 0 / 15%);
+  cursor: pointer;
 }
 
 .hero-btn:hover,
@@ -296,8 +312,8 @@ img {
   margin-bottom: 72px;
 }
 
-.team-img {
-  margin-bottom: 32px;
+.team-descr {
+  padding: 32px 0;
 }
 
 .team-subtitle {
@@ -331,6 +347,7 @@ img {
   /* !!! Дозволяємо перенесення flex-елементів на новий рядок !!! */
   flex-wrap: wrap;
   gap: 24px;
+  row-gap: 48px;
 }
 
 .portfolio-item {
@@ -338,8 +355,10 @@ img {
   border-bottom: 1px solid var(--cornflower);
 }
 
-.portfolio-img {
-  margin-bottom: 32px;
+.portfolio-descr {
+  padding: 32px 16px;
+  border: 1px solid #e7e9fc;
+  border-top: none;
 }
 
 .portfolio-subtitle {
@@ -348,12 +367,11 @@ img {
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: var(--navy-blue);
-  margin: 0 0 8px 16px;
+  margin-bottom: 8px;
 }
 
 .portfolio-text {
   color: var(--slate);
-  margin: 0 0 32px 16px;
 }
 
 /*  footer  */
@@ -372,6 +390,7 @@ img {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--iris);
+  display: inline-block;
   margin-bottom: 16px;
 }
 
