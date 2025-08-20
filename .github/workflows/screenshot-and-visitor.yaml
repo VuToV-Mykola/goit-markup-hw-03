@@ -320,6 +320,12 @@ jobs:
               });
               
               const page = await browser.newPage();
+              // Встановлюємо viewport 1440px по ширині і довільну висоту
+               await page.setViewport({
+                 width: 1440,
+                 height: 1080, // стартова висота, fullPage все одно захопить всю сторінку
+                 deviceScaleFactor: 1
+               });
               const targetUrl = 'https://' + process.env.GITHUB_REPOSITORY_OWNER + '.github.io/' + process.env.      GITHUB_REPOSITORY.split('/')[1] + '/';
               
               console.log('🌐 Checking GitHub Pages availability:', targetUrl);
