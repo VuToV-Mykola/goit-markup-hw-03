@@ -318,7 +318,6 @@ jobs:
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',       '--disable-web-security'],
                 executablePath: '/usr/bin/google-chrome'
               });
-              
               const owner = process.env.GITHUB_REPOSITORY_OWNER;
               const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
               const targetUrl = `https://${owner}.github.io/${repo}/`;
