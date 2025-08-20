@@ -318,16 +318,15 @@ jobs:
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',       '--disable-web-security'],
                 executablePath: '/usr/bin/google-chrome'
               });
-              const owner = process.env.GITHUB_REPOSITORY_OWNER;
-              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
-              const targetUrl = `https://${owner}.github.io/${repo}/`;
+              
+              const page = await browser.newPage();
+              const targetUrl = 'https://' + process.env.GITHUB_REPOSITORY_OWNER + '.github.io/' + process.env.      GITHUB_REPOSITORY.split('/')[1] + '/';
               
               console.log('🌐 Checking GitHub Pages availability:', targetUrl);
               
               let shouldTakeScreenshot = false;
-              const page = await browser.newPage();
               try {
-                const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 20000 });
+                const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 15000 });
                 const pageTitle = await page.title();
                 const pageContent = await page.content();
                 
@@ -351,6 +350,7 @@ jobs:
                 return;
               }
               
+              // Прокрутка для завантаження
               await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
               await new Promise(r => setTimeout(r, 2000));
               await page.evaluate(() => window.scrollTo(0, 0));
