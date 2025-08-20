@@ -1,6 +1,6 @@
 :root {
-  --primary-font: 'Roboto', sans-serif;
-  --secondary-font: 'Raleway', sans-serif;
+  --primary-font: "Roboto", sans-serif;
+  --secondary-font: "Raleway", sans-serif;
   --iris: #4d5ae5;
   --ocean: #404bbf;
   --navy-blue: #2e2f42;
@@ -14,42 +14,61 @@
   --white: #fff;
 }
 
-/* Властивість font-family успадковується більшістю елементів, тому його задають елементу body */
-
-/* Спочатку типографіка(+ :active, :hover, :focus): color, background-color, font-family, font-size, line-height, font-weight, font-style, text: text-decoration, text-transform, text-align, letter-spacing, text-indent (абзац), text-shadow: <зміщення по x>, <зміщення по y>, <радіус розмиття>, <колір>,    */
-
-/* Або modern-normalize або  
+/* Або modern-normalize або
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+} */
+
+/* !!! Глобальні стилі документа !!! */
+
+/* background-color: rgb(0 255 0 / 10%); прозорий, щоб було видно накладки */
+
+/* !!! Ховаємо заголовок !!! */
+.visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(100%);
 }
-*/
+
+/* !!! Обнуляємо маржини заголовків та параграфів «B1» !!! */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+/* !!! Прибираємо нижне підкреслення для посилань!!! */
 a {
   text-decoration: none;
 }
 
-ul,
-ol {
+ul {
+  /* !!! Глобальне скидання стилів для списків(падінги, марджини, індекси) «B1» !!! */
+  margin: 0;
+  padding: 0;
   list-style-type: none;
 }
 
+/* !!!Прибираємо курсив для тегу address !!! */
 address {
   font-style: normal;
 }
 
-/* line-height: 1.5;-Використання множника гарантує рівномірне масштабування інтервалу між рядками при зміні розміру тексту. */
+/*  body  */
 
-/* Глобальні стилі документа */
-
-/* body {
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  color: #2a2a2a;(крім посилань)
-  background-color: #fafafa;
-} */
-
-/* !!! body !!! */
+/* Властивість font-family,font-size, font-weight, line-height, letter-spacing, text-align, background-color успадковується більшістю елементів, тому його задають елементу body */
 body {
   font-family: var(--primary-font);
   font-size: 16px;
@@ -58,11 +77,62 @@ body {
   letter-spacing: 0.02em;
   text-align: center;
   color: var(--slate);
-
   background-color: var(--color-white);
+
+  /* !!! Обнуляємо стандартний margin елемента body - 8px з усіх боків !!! */
+  margin: 0;
 }
 
-/* !!! logo !!! */
+.container {
+  max-width: 1158px; /* «B8»  */
+
+  /* !!! Центруємо контент !!! */
+  margin: 0 auto;
+
+  /* !!! Задаємо падінги контейнеру !!! */
+  padding: 0 15px;
+}
+
+section {
+  padding: 120px 0; /* «B15» */
+}
+
+/* .thumb {
+  overflow: hidden;
+} */
+
+img {
+  /* !!! Прибираємо нижній проміжок !!! */
+  display: block;
+
+  /* !!! Робимо щоб зображення не виходило за межі батьківського елемента !!! */
+  max-width: 100%;
+
+  /* !!! Робимо щоб висота зображення автоматично підлаштовувалася під ширину !!! */
+  height: auto;
+
+  /* !!! Задаємо властивість, щоб зображення не спотворювалося !!! */
+  object-fit: cover;
+}
+
+/* header */
+.header {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--cornflower);
+}
+
+.header .container {
+  /* !!! Всі елементи в одну лінію !!! */
+  display: flex;
+
+  /*   !!! Розподіляємо елементи по головній осі з максимальним проміжком !!! */
+  justify-content: space-between;
+
+  /* !!! Вирівнюємо елементи по центру вздовж поперечної осі !!! */
+  align-items: center;
+}
+
+/*  logo  */
 .logo {
   font-family: var(--second-family);
   font-size: 18px;
@@ -77,9 +147,18 @@ body {
   color: var(--navy-blue);
 }
 
-/* !!! nav !!! */
+/*  nav  */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 76px;
+}
 
-/* === Навігаційні посилання === */
+.nav-list {
+  display: flex;
+  gap: 40px;
+}
+
 .nav-link {
   font-weight: 500;
   color: var(--navy-blue);
@@ -91,7 +170,12 @@ body {
   color: var(--ocean);
 }
 
-/* !!! address !!! */
+/*  address  */
+.contacts-list {
+  display: flex;
+  gap: 40px;
+}
+
 .contacts .contacts-link {
   color: var(--slate);
 }
@@ -101,9 +185,11 @@ body {
   color: var(--ocean);
 }
 
-/* !!! hero !!! */
+/*  hero  */
 .hero {
   background: var(--navy-blue);
+  width: 100%;
+  padding: 188px 0;
 }
 
 .hero-title {
@@ -112,20 +198,30 @@ body {
   line-height: 1.07;
   letter-spacing: 0.02em;
   color: var(--white);
-
   background: var(--navy-blue);
+  max-width: 496px;
+  margin: 0 auto 48px;
 }
 
-/* !!! hero-btn !!! */
+/*  hero-btn  */
 .hero-btn {
   font-size: 16px;
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: 0.04em;
   color: var(--white);
-
   background: var(--iris);
+
+  /* !!! Включаємо блочну модель !!! */
+  display: block;
+
+  /*  !!! центруємо елемент по горизонталі !!! */
+  margin: 0 auto;
+
+  padding: 16px 32px;
+  border-radius: 4px;
   cursor: pointer;
+  box-shadow: 0 4px 4px 0 rgb(0 0 0 / 15%);
 }
 
 .hero-btn:hover,
@@ -138,10 +234,16 @@ body {
   background: var(--ocean);
 }
 
-/* !!! features !!! */
-.features-title {
-  letter-spacing: 0.02em;
-  color: var(--white);
+/*  features  */
+.features-list {
+  text-align: left;
+  display: flex;
+  gap: 24px;
+}
+
+.features-item {
+  /* !!! Встановлюємо базовий розмір flex-елемента: 4 елементи в рядок із проміжком 72px між ними !!! */
+  flex-basis: calc((100% - 72px) / 4);
 }
 
 .features-subtitle {
@@ -150,19 +252,32 @@ body {
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: var(--navy-blue);
+  margin-bottom: 8px;
 }
 
 .features-text {
   color: var(--slate);
 }
 
-/* !!! team !!! */
+/*  team  */
 .team {
   background-color: var(--cloud);
 }
 
+.team-list {
+  display: flex;
+  gap: 24px;
+}
+
 .team-item {
   background-color: var(--white);
+  flex-basis: calc((100% - 72px) / 4);
+  padding-bottom: 32px;
+  border-radius: 0 0 4px 4px;
+  box-shadow:
+    0 2px 1px 0 rgb(46 47 66 / 8%),
+    0 1px 1px 0 rgb(46 47 66 / 16%),
+    0 1px 6px 0 rgb(46 47 66 / 8%);
 }
 
 .team-item:hover,
@@ -177,6 +292,11 @@ body {
   letter-spacing: 0.02em;
   text-transform: capitalize;
   color: var(--navy-blue);
+  margin-bottom: 72px;
+}
+
+.team-img {
+  margin-bottom: 32px;
 }
 
 .team-subtitle {
@@ -185,13 +305,14 @@ body {
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: var(--navy-blue);
+  margin-bottom: 8px;
 }
 
 .team-text {
   color: var(--slate);
 }
 
-/* !!! portfolio !!! */
+/*  portfolio  */
 
 .portfolio-title {
   font-size: 36px;
@@ -200,6 +321,24 @@ body {
   letter-spacing: 0.02em;
   text-transform: capitalize;
   color: var(--navy-blue);
+  margin-bottom: 72px;
+}
+
+.portfolio-list {
+  display: flex;
+
+  /* !!! Дозволяємо перенесення flex-елементів на новий рядок !!! */
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.portfolio-item {
+  flex-basis: calc((100% - 48px) / 3);
+  border-bottom: 1px solid var(--cornflower);
+}
+
+.portfolio-img {
+  margin-bottom: 32px;
 }
 
 .portfolio-subtitle {
@@ -208,15 +347,20 @@ body {
   line-height: 1.2;
   letter-spacing: 0.02em;
   color: var(--navy-blue);
+  margin: 0 0 8px 16px;
 }
 
 .portfolio-text {
   color: var(--slate);
+  margin: 0 0 32px 16px;
 }
 
-/* !!! footer !!! */
+/*  footer  */
 .footer {
+  text-align: left;
   background: var(--navy-blue);
+  width: 100%;
+  padding: 100px 0;
 }
 
 .footer-logo {
@@ -227,6 +371,7 @@ body {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--iris);
+  margin-bottom: 16px;
 }
 
 .accent-footer {
@@ -235,4 +380,5 @@ body {
 
 .footer-text {
   color: var(--cloud);
+  max-width: 264px;
 }
