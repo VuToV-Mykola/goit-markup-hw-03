@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, master]
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: "0 */2 * * *"
   workflow_dispatch:
     inputs:
       add_like:
-        description: 'Add your like (only one per user allowed)'
+        description: "Add your like (only one per user allowed)"
         required: false
         default: true
         type: boolean
@@ -19,11 +19,11 @@ permissions:
   actions: read
 
 env:
-  BADGE_STYLE: 'for-the-badge'
-  BADGE_COLOR: 'brightgreen'
-  LIKES_COLOR: 'gold'
-  DATA_DIR: 'assets/db'
-  SCREENSHOT_DIR: 'assets'
+  BADGE_STYLE: "for-the-badge"
+  BADGE_COLOR: "brightgreen"
+  LIKES_COLOR: "gold"
+  DATA_DIR: "assets/db"
+  SCREENSHOT_DIR: "assets"
 
 jobs:
   update-readme-and-visitor:
@@ -315,55 +315,35 @@ jobs:
               if (fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
               
               browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-web-security'],
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',       '--disable-web-security'],
                 executablePath: '/usr/bin/google-chrome'
               });
               
-              const page = await browser.newPage();
-              const githubPages = 'https://' + '${{ github.repository_owner }}' + '.github.io/' + '${{ github.event.repository.name }}' + '/';
-              const indexPath = path.join(process.cwd(), 'index.html');
+              const owner = process.env.GITHUB_REPOSITORY_OWNER;
+              const repo = process.env.GITHUB_REPOSITORY.split('/')[1];
+              const targetUrl = `https://${owner}.github.io/${repo}/`;
               
-              let targetUrl;
-              let urlType;
+              console.log('🌐 Checking GitHub Pages availability:', targetUrl);
+              
               let shouldTakeScreenshot = false;
-              
-              if (fs.existsSync(indexPath)) {
-                targetUrl = 'file://' + indexPath;
-                urlType = 'local file';
-                shouldTakeScreenshot = true;
-                console.log('📁 Found local index.html file');
-              } else {
-                targetUrl = githubPages;
-                urlType = 'GitHub Pages';
-                console.log('🌐 Checking GitHub Pages availability...');
+              const page = await browser.newPage();
+              try {
+                const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 20000 });
+                const pageTitle = await page.title();
+                const pageContent = await page.content();
                 
-                // Перевіряємо доступність GitHub Pages перед створенням скриншоту
-                try {
-                  const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 15000 });
-                  const pageTitle = await page.title();
-                  const pageContent = await page.content();
-                  
-                  // Перевіряємо на помилки 404, 503 або інші проблеми
-                  if (response.status() === 404) {
-                    console.log('❌ GitHub Pages returns 404 - site not found');
-                    console.log('ℹ️ Reason: GitHub Pages is not set up or deployed for this repository');
-                  } else if (response.status() >= 400) {
-                    console.log('❌ GitHub Pages returns error status:', response.status());
-                    console.log('ℹ️ Reason: Server error or site unavailable');
-                  } else if (pageTitle.includes('404') || pageContent.includes('There isn\\'t a GitHub Pages site here')) {
-                    console.log('❌ GitHub Pages shows 404 content - site not properly configured');
-                    console.log('ℹ️ Reason: GitHub Pages exists but shows error page');
-                  } else if (pageContent.includes('github.io') && pageContent.length < 1000) {
-                    console.log('❌ GitHub Pages shows minimal/error content');
-                    console.log('ℹ️ Reason: Site appears to be a placeholder or error page');
-                  } else {
-                    console.log('✅ GitHub Pages is accessible and has content');
-                    shouldTakeScreenshot = true;
-                  }
-                } catch (navError) {
-                  console.log('❌ Cannot access GitHub Pages:', navError.message);
-                  console.log('ℹ️ Reason: Network error or site is completely unavailable');
+                if (response.status() === 404) {
+                  console.log('❌ GitHub Pages returns 404 - site not found');
+                } else if (response.status() >= 400) {
+                  console.log('❌ GitHub Pages returns error status:', response.status());
+                } else if (pageTitle.includes('404') || pageContent.includes(\"There isn't a GitHub Pages site       here\")) {
+                  console.log('❌ GitHub Pages shows 404 content');
+                } else {
+                  console.log('✅ GitHub Pages is accessible and has content');
+                  shouldTakeScreenshot = true;
                 }
+              } catch (navError) {
+                console.log('❌ Cannot access GitHub Pages:', navError.message);
               }
               
               if (!shouldTakeScreenshot) {
@@ -372,44 +352,24 @@ jobs:
                 return;
               }
               
-              console.log('🔗 Taking screenshot from', urlType + ':', targetUrl);
-              
-              // Якщо це локальний файл, завантажуємо його зараз
-              if (urlType === 'local file') {
-                await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-              }
-              
-              // Прокручуємо сторінку для повного завантаження контенту
               await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-              await new Promise(resolve => setTimeout(resolve, 2000));
+              await new Promise(r => setTimeout(r, 2000));
               await page.evaluate(() => window.scrollTo(0, 0));
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(r => setTimeout(r, 1000));
 
               await page.screenshot({ path: screenshotPath, fullPage: true });
               
               const stats = fs.statSync(screenshotPath);
-              const fileSizeKB = Math.round(stats.size / 1024);
-              
               if (stats.size > 0) {
-                console.log('✅ Screenshot created successfully:', fileSizeKB + 'KB from', urlType);
+                console.log('✅ Screenshot created successfully:', Math.round(stats.size / 1024) + 'KB');
                 console.log('SCREENSHOT_SUCCESS=true');
               } else {
                 console.log('❌ Screenshot file is empty');
-                if (fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
+                fs.unlinkSync(screenshotPath);
                 console.log('SCREENSHOT_SUCCESS=false');
               }
-              
             } catch (error) {
               console.log('❌ Screenshot failed:', error.message);
-              
-              // Визначаємо причину помилки
-              const indexPath = path.join(process.cwd(), 'index.html');
-              if (!fs.existsSync(indexPath)) {
-                console.log('ℹ️ Reason: No index.html found and GitHub Pages is not available');
-              } else {
-                console.log('ℹ️ Reason: Technical error during screenshot capture');
-              }
-              
               console.log('SCREENSHOT_SUCCESS=false');
             } finally {
               if (browser) await browser.close();
@@ -419,7 +379,6 @@ jobs:
           takeScreenshot().catch(console.error);
           " | tee screenshot_output.log
 
-          # Перевіряємо результат створення скриншоту
           if grep -q "SCREENSHOT_SUCCESS=true" screenshot_output.log; then
             echo "SCREENSHOT_CREATED=true" >> $GITHUB_ENV
             echo "🎯 Screenshot will be included in README"
