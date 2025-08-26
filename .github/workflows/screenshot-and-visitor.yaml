@@ -130,7 +130,7 @@ jobs:
           LICENSE=$(echo "$REPO_INFO" | jq -r '.license.name // "No License"')
 
           echo '{"schemaVersion": 1, "label": "📦 size", "message": "'${REPO_SIZE_MB}'MB", "color": "blue", "style": "'$BADGE_STYLE'"}' > "$DATA_DIR/repo-size.json"
-          echo '{"schemaVersion": 1, "label": "🔤 language", "message": "'$MAIN_LANGUAGE'", "color": "green", "style": "'$BADGE_STYLE'"}' > "$DATA_DIR/repo-language.json"
+
           echo '{"schemaVersion": 1, "label": "📄 license", "message": "'$LICENSE'", "color": "blue", "style": "'$BADGE_STYLE'"}' > "$DATA_DIR/repo-license.json"
 
           # RELEASES
@@ -147,9 +147,6 @@ jobs:
           # === ТЕХНОЛОГІЧНІ БЕЙДЖІ ===
           echo "🔧 Generating technology badges..."
           TECH_BADGES=""
-
-          # Додаємо бейдж терміналу Mac на початку
-          TECH_BADGES="$TECH_BADGES[![Terminal](https://img.shields.io/badge/mac%20terminal-000000?style=for-the-badge&logo=apple&logoColor=white&labelColor=000000)](https://support.apple.com/guide/terminal/welcome/mac) "
 
           # Отримуємо мови програмування з GitHub API
           LANGUAGES_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
@@ -170,7 +167,8 @@ jobs:
             done
           fi
 
-          # Додаємо стандартні інструменти
+          # Додаємо інструменти
+          TECH_BADGES="$TECH_BADGES[![Terminal](https://img.shields.io/badge/mac%20terminal-000000?style=for-the-badge&logo=apple&logoColor=white&labelColor=000000)](https://support.apple.com/guide/terminal/welcome/mac) "
           TECH_BADGES="$TECH_BADGES[![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)](https://code.visualstudio.com/) "
           TECH_BADGES="$TECH_BADGES[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) "
           TECH_BADGES="$TECH_BADGES[![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/) "
@@ -447,7 +445,6 @@ jobs:
             echo "[![📊 Views](https://img.shields.io/endpoint?url=$REPO_URL/$DATA_DIR/visitors-badge.json)](https://github.com/${{ github.repository }}/graphs/traffic)"
             echo "[![⭐ Stars](https://img.shields.io/endpoint?url=$REPO_URL/$DATA_DIR/likes-badge.json)](https://github.com/${{ github.repository }}/actions/workflows/screenshot-and-visitor.yaml)"
             echo "[![📦 Size](https://img.shields.io/endpoint?url=$REPO_URL/$DATA_DIR/repo-size.json)](https://github.com/${{ github.repository }})"
-            echo "[![🔤 Language](https://img.shields.io/endpoint?url=$REPO_URL/$DATA_DIR/repo-language.json)](https://github.com/${{ github.repository }})"
             echo "[![📄 License](https://img.shields.io/endpoint?url=$REPO_URL/$DATA_DIR/repo-license.json)](https://github.com/${{ github.repository }}/blob/main/LICENSE)"
             if [ -n "$DOWNLOADS_BADGE" ]; then
               echo "$DOWNLOADS_BADGE"
