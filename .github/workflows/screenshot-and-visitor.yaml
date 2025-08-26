@@ -298,12 +298,19 @@ jobs:
 
       - name: 📸 Generate screenshot
         run: |
+          if [ "$SCREENSHOT_DEPENDENCIES_AVAILABLE" = "false" ]; then
+            echo "❌ Screenshot dependencies not available - skipping screenshot"
+            echo "SCREENSHOT_CREATED=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
           SCREENSHOT_CREATED=false
 
           node -e "
           const puppeteer = require('puppeteer');
           const fs = require('fs');
           const path = require('path');
+          const { execSync } = require('child_process');
 
           async function takeScreenshot() {
             let browser;
@@ -314,40 +321,89 @@ jobs:
               if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
               if (fs.existsSync(screenshotPath)) fs.unlinkSync(screenshotPath);
               
+              let chromeExecutable = '/usr/bin/google-chrome';
+              if (!fs.existsSync(chromeExecutable)) {
+                try {
+                  const chromePath = execSync('which google-chrome-stable || which google-chrome', { encoding: 'utf8' }).trim();
+                  if (chromePath) chromeExecutable = chromePath;
+                } catch (e) {
+                  console.log('❌ Chrome not found:', e.message);
+                  console.log('SCREENSHOT_SUCCESS=false');
+                  return;
+                }
+              }
+
+              console.log('Using Chrome executable:', chromeExecutable);
+              
+              const browserArgs = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                '--headless',
+                '--disable-gpu',
+                '--disable-software-rasterizer',
+                '--disable-dev-shm-usage',
+                '--remote-debugging-port=0',
+                '--no-zygote',
+                '--no-first-run',
+                '--disable-extensions'
+              ];
+
               browser = await puppeteer.launch({
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',       '--disable-web-security'],
-                executablePath: '/usr/bin/google-chrome'
+                args: browserArgs,
+                executablePath: chromeExecutable,
+                timeout: 60000,
+                dumpio: false  // Убираем детальные логи чтобы избежать ошибок DBus
               });
               
               const page = await browser.newPage();
-              // Встановлюємо viewport 1440px по ширині і довільну висоту
-               await page.setViewport({
-                 width: 1440,
-                 height: 1080, // стартова висота, fullPage все одно захопить всю сторінку
-                 deviceScaleFactor: 1
-               });
-              const targetUrl = 'https://' + process.env.GITHUB_REPOSITORY_OWNER + '.github.io/' + process.env.      GITHUB_REPOSITORY.split('/')[1] + '/';
+              await page.setViewport({ width: 1280, height: 800 });
               
-              console.log('🌐 Checking GitHub Pages availability:', targetUrl);
+              const githubPages = 'https://' + '${{ github.repository_owner }}' + '.github.io/' + '${{ github.event.repository.name }}' + '/';
+              const indexPath = path.join(process.cwd(), 'index.html');
               
+              let targetUrl;
+              let urlType;
               let shouldTakeScreenshot = false;
-              try {
-                const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 15000 });
-                const pageTitle = await page.title();
-                const pageContent = await page.content();
+              
+              if (fs.existsSync(indexPath)) {
+                targetUrl = 'file://' + indexPath;
+                urlType = 'local file';
+                shouldTakeScreenshot = true;
+                console.log('📁 Found local index.html file');
+              } else {
+                targetUrl = githubPages;
+                urlType = 'GitHub Pages';
+                console.log('🌐 Checking GitHub Pages availability...');
                 
-                if (response.status() === 404) {
-                  console.log('❌ GitHub Pages returns 404 - site not found');
-                } else if (response.status() >= 400) {
-                  console.log('❌ GitHub Pages returns error status:', response.status());
-                } else if (pageTitle.includes('404') || pageContent.includes(\"There isn't a GitHub Pages site       here\")) {
-                  console.log('❌ GitHub Pages shows 404 content');
-                } else {
-                  console.log('✅ GitHub Pages is accessible and has content');
-                  shouldTakeScreenshot = true;
+                try {
+                  const response = await page.goto(targetUrl, { 
+                    waitUntil: 'networkidle0', 
+                    timeout: 30000 
+                  });
+                  
+                  if (response && response.status() === 200) {
+                    const pageTitle = await page.title();
+                    const pageContent = await page.content();
+                    
+                    const hasMeaningfulContent = pageContent.length > 500 && 
+                                               !pageTitle.includes('404') &&
+                                               !pageContent.includes('There isn\\'t a GitHub Pages site here');
+                    
+                    if (hasMeaningfulContent) {
+                      console.log('✅ GitHub Pages is accessible with meaningful content');
+                      shouldTakeScreenshot = true;
+                    } else {
+                      console.log('❌ GitHub Pages has insufficient content');
+                    }
+                  } else {
+                    console.log('❌ GitHub Pages returned status:', response?.status() || 'unknown');
+                  }
+                } catch (navError) {
+                  console.log('❌ Cannot access GitHub Pages:', navError.message);
                 }
-              } catch (navError) {
-                console.log('❌ Cannot access GitHub Pages:', navError.message);
               }
               
               if (!shouldTakeScreenshot) {
@@ -356,44 +412,109 @@ jobs:
                 return;
               }
               
-              // Прокрутка для завантаження
-              await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-              await new Promise(r => setTimeout(r, 2000));
-              await page.evaluate(() => window.scrollTo(0, 0));
-              await new Promise(r => setTimeout(r, 1000));
-
-              await page.screenshot({ path: screenshotPath, fullPage: true });
+              console.log('🔗 Taking screenshot from', urlType + ':', targetUrl);
               
-              const stats = fs.statSync(screenshotPath);
-              if (stats.size > 0) {
-                console.log('✅ Screenshot created successfully:', Math.round(stats.size / 1024) + 'KB');
-                console.log('SCREENSHOT_SUCCESS=true');
-              } else {
-                console.log('❌ Screenshot file is empty');
-                fs.unlinkSync(screenshotPath);
+              try {
+                await page.goto(targetUrl, { 
+                  waitUntil: 'networkidle0', 
+                  timeout: 60000 
+                });
+                
+                // Заменяем waitForTimeout на setTimeout
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                
+                await page.evaluate(async () => {
+                  await new Promise(resolve => {
+                    let totalHeight = 0;
+                    const distance = 100;
+                    const timer = setInterval(() => {
+                      const scrollHeight = document.body.scrollHeight;
+                      window.scrollBy(0, distance);
+                      totalHeight += distance;
+                      
+                      if (totalHeight >= scrollHeight) {
+                        clearInterval(timer);
+                        resolve();
+                      }
+                    }, 100);
+                  });
+                });
+                
+                // Заменяем waitForTimeout на setTimeout
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                await page.evaluate(() => window.scrollTo(0, 0));
+                
+                // Заменяем waitForTimeout на setTimeout
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                await page.screenshot({ 
+                  path: screenshotPath, 
+                  fullPage: true,
+                  quality: 80,
+                  type: 'png'
+                });
+                
+                if (fs.existsSync(screenshotPath)) {
+                  const stats = fs.statSync(screenshotPath);
+                  const fileSizeKB = Math.round(stats.size / 1024);
+                  
+                  if (stats.size > 1000) {
+                    console.log('✅ Screenshot created successfully:', fileSizeKB + 'KB');
+                    console.log('SCREENSHOT_SUCCESS=true');
+                  } else {
+                    console.log('❌ Screenshot file is too small:', fileSizeKB + 'KB');
+                    fs.unlinkSync(screenshotPath);
+                    console.log('SCREENSHOT_SUCCESS=false');
+                  }
+                } else {
+                  console.log('❌ Screenshot file was not created');
+                  console.log('SCREENSHOT_SUCCESS=false');
+                }
+                
+              } catch (screenshotError) {
+                console.log('❌ Screenshot capture failed:', screenshotError.message);
                 console.log('SCREENSHOT_SUCCESS=false');
               }
+              
             } catch (error) {
-              console.log('❌ Screenshot failed:', error.message);
+              console.log('❌ Browser setup failed:', error.message);
               console.log('SCREENSHOT_SUCCESS=false');
             } finally {
-              if (browser) await browser.close();
+              if (browser) {
+                try {
+                  await browser.close();
+                } catch (closeError) {
+                  console.log('⚠️ Browser close error:', closeError.message);
+                }
+              }
             }
           }
 
-          takeScreenshot().catch(console.error);
+          takeScreenshot().catch(error => {
+            console.log('❌ Unhandled error in screenshot process:', error.message);
+            console.log('SCREENSHOT_SUCCESS=false');
+          });
           " | tee screenshot_output.log
 
           if grep -q "SCREENSHOT_SUCCESS=true" screenshot_output.log; then
             echo "SCREENSHOT_CREATED=true" >> $GITHUB_ENV
-            echo "🎯 Screenshot will be included in README"
+            echo "🎯 Screenshot created successfully"
           else
             echo "SCREENSHOT_CREATED=false" >> $GITHUB_ENV
-            echo "⏭️ Screenshot section will be skipped in README"
+            echo "⏭️ Screenshot creation failed"
+          fi
+
+          if [ -f "$SCREENSHOT_DIR/screenshot.png" ]; then
+            FILE_SIZE=$(stat -f%z "$SCREENSHOT_DIR/screenshot.png" 2>/dev/null || stat -c%s "$SCREENSHOT_DIR/screenshot.png" 2>/dev/null || echo 0)
+            if [ "$FILE_SIZE" -lt 1000 ]; then
+              echo "⚠️ Screenshot file exists but is too small ($FILE_SIZE bytes), removing..."
+              rm -f "$SCREENSHOT_DIR/screenshot.png"
+              echo "SCREENSHOT_CREATED=false" >> $GITHUB_ENV
+            fi
           fi
 
           rm -f screenshot_output.log
-
       - name: 📝 Update README with all content
         run: |
           REPO_URL="https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}"
